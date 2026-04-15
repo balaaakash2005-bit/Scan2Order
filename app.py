@@ -381,12 +381,14 @@ def menu():
     
     items = MenuItem.query.filter(MenuItem.available == True, MenuItem.available_count > 0).all()
     categories_query = db.session.query(MenuItem.category).filter(MenuItem.available == True, MenuItem.available_count > 0).distinct().all()
-    categories = [cat[0].strip() for cat in categories_query]
+    # Ensure categories are clean
+    categories = [cat[0].strip() for cat in categories_query if cat[0]]
 
-    # Add the Drinks category if any drinks items are available but category query missed it
-    drinks_items = MenuItem.query.filter(MenuItem.category == 'Drinks', MenuItem.available == True, MenuItem.available_count > 0).all()
-    if drinks_items and 'Drinks' not in categories:
-        categories.append('Drinks')
+    # Ensure 'Drinks' is in categories if it exists in DB
+    if 'Drinks' not in categories:
+        has_drinks = MenuItem.query.filter_by(category='Drinks').first()
+        if has_drinks:
+            categories.append('Drinks')
 
     return render_template('menu.html', items=items, categories=categories)
 
@@ -494,6 +496,49 @@ def add_to_cart(id):
     session.modified = True
     
     return redirect(url_for('view_cart'))
+
+@app.route('/api/cart/add/<int:id>', methods=['POST'])
+def api_add_to_cart(id):
+    """Add item to cart via AJAX and return JSON"""
+    try:
+        item = MenuItem.query.get_or_404(id)
+        
+        if 'cart' not in session:
+            session['cart'] = {}
+        
+        # Get data from JSON or form
+        if request.is_json:
+            data = request.get_json()
+            quantity = int(data.get('quantity', 1))
+        else:
+            quantity = int(request.form.get('quantity', 1))
+        
+        # Check stock
+        if item.available_count < quantity:
+            return jsonify({'success': False, 'error': 'Not enough stock'}), 400
+            
+        item_id = str(id)
+        if item_id in session['cart']:
+            session['cart'][item_id]['quantity'] += quantity
+        else:
+            session['cart'][item_id] = {
+                'name': item.name,
+                'price': item.price,
+                'quantity': quantity
+            }
+        
+        session.modified = True
+        
+        # Total items in cart (unique items)
+        cart_count = len(session['cart'])
+        
+        return jsonify({
+            'success': True, 
+            'cart_count': cart_count,
+            'message': f'{item.name} added to cart!'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/cart')
 def view_cart():

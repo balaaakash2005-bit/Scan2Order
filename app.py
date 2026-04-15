@@ -323,12 +323,17 @@ else:
         # Use SQLite (default, no setup needed)
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///menu_db.sqlite'
 
-    # Print database type for persistence verification
+    # Forcing log flush to ensure messages show in Render
+    import sys
+    
     db_uri = app.config['SQLALCHEMY_DATABASE_URI']
     if 'postgresql' in db_uri:
-        print("\n  [DB Check] ✅ Using PostgreSQL (Persistent) - Orders will be saved forever.")
+        print("\n[DB Check] ✅ Using PostgreSQL (Persistent) - Orders will be saved forever.", flush=True)
+        print("[DB Check] Connection URL found and configured successfully.", flush=True)
     else:
-        print("\n  [DB Check] ⚠️ Using SQLite (Temporary) - Orders will be deleted on Render restart!")
+        print("\n[DB Check] ⚠️ Using SQLite (Temporary) - Orders will be deleted on Render restart!", flush=True)
+        print("[DB Check] WARNING: DATABASE_URL environment variable might be missing or incorrect.", flush=True)
+    sys.stdout.flush()
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')

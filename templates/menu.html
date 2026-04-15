@@ -4,16 +4,19 @@
 {% block tagline %}Browse Our Canteen Menu{% endblock %}
 
 {% block content %}
-<!-- Floating Cart Icon -->
-<a href="{{ url_for('view_cart') }}" class="cart-float" id="cart-float">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2">
+<!-- Floating Cart Icon (Bottom Left) -->
+<a href="{{ url_for('view_cart') }}" class="cart-float left-side" id="cart-float">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5">
         <circle cx="9" cy="21" r="1"></circle>
         <circle cx="20" cy="21" r="1"></circle>
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
     </svg>
     <span class="cart-count" id="cart-count">{{ session.get('cart', {})|length }}</span>
 </a>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" style="position: fixed; bottom: 6rem; left: 2rem; z-index: 1000;"></div>
 
 <div class="category-filter">
     <button class="category-btn active" onclick="filterCategory(this, 'all')">All Items</button>
@@ -151,6 +154,85 @@
         if (currentValue > 1) {
             input.value = currentValue - 1;
         }
+    }
+
+    // AJAX Add to Cart
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const action = this.getAttribute('action');
+            // Change standard URL to API URL
+            const apiUrl = action.replace('/cart/add/', '/api/cart/add/');
+            const formData = new FormData(this);
+            const btn = this.querySelector('.add-to-cart-btn');
+            
+            // Visual feedback on button
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading-spinner"></span> Adding...';
+            btn.disabled = true;
+
+            fetch(apiUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    // Update cart count badge
+                    const countBadge = document.getElementById('cart-count');
+                    countBadge.innerText = data.cart_count;
+                    countBadge.classList.add('pulse-anim');
+                    setTimeout(() => countBadge.classList.remove('pulse-anim'), 500);
+                    
+                    // Show success toast
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.error || 'Something went wrong', 'error');
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast('Failed to add item', 'error');
+            });
+        });
+    });
+
+    function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.cssText = `
+            background: rgba(10, 10, 25, 0.9);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid ${type === 'success' ? '#10b981' : '#ef4444'};
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        `;
+        
+        const icon = type === 'success' ? '✅' : '❌';
+        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-20px)';
+            toast.style.transition = 'all 0.4s ease';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
     }
 </script>
 {% endblock %}

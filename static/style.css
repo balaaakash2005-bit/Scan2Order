@@ -529,11 +529,17 @@ option {
     z-index: 99;
     color: #000;
     font-weight: bold;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cart-float.left-side {
+    right: auto;
+    left: 2rem;
+    box-shadow: 0 5px 25px rgba(234, 179, 8, 0.4);
 }
 
 .cart-float:hover {
-    transform: scale(1.1);
+    transform: scale(1.1) translateY(-5px);
     cursor: pointer;
 }
 
@@ -798,5 +804,37 @@ tr:hover td {
 }
 
 .menu-item:nth-child(n) {
+    animation-delay: calc(n * 0.05s);
+}
+
+.pulse-anim {
+    animation: badgePulse 0.5s ease;
+}
+
+@keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
     animation-delay: calc(0.1s * var(--i, 1));
 }

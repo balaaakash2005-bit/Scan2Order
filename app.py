@@ -323,6 +323,13 @@ else:
         # Use SQLite (default, no setup needed)
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///menu_db.sqlite'
 
+    # Print database type for persistence verification
+    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+    if 'postgresql' in db_uri:
+        print("\n  [DB Check] ✅ Using PostgreSQL (Persistent) - Orders will be saved forever.")
+    else:
+        print("\n  [DB Check] ⚠️ Using SQLite (Temporary) - Orders will be deleted on Render restart!")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -655,13 +662,16 @@ def confirm_order():
         else:
             p_status = 'success'
         
-        # Create order
+        # Create order in IST
+        now_ist = datetime.now() + timedelta(hours=5, minutes=30)
+        
         new_order = Order(
             customer_id=customer.id,
             total_amount=total_amount,
             payment_method=payment_method,
             status='confirmed',
-            payment_status=p_status
+            payment_status=p_status,
+            timestamp=now_ist
         )
         db.session.add(new_order)
         db.session.flush()

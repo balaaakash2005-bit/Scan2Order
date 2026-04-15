@@ -299,41 +299,31 @@ def reset_daily_stocks():
 app = Flask(__name__)
 
 # Database configuration
-# On Render, DATABASE_URL is set automatically (PostgreSQL)
-# Locally, it uses SQLite (no MySQL required)
-database_url = os.getenv('DATABASE_URL', '')
-if database_url:
-    # Render provides postgres:// but SQLAlchemy needs postgresql://
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # Local SQLite (easier for development)
-    # Check if MySQL is configured in environment variables
-    db_user = os.getenv('DB_USER', '')
-    db_password = os.getenv('DB_PASSWORD', '')
-    db_host = os.getenv('DB_HOST', '')
-    db_name = os.getenv('DB_NAME', '')
-    db_port = os.getenv('DB_PORT', '3306')
-    
-    if db_user and db_host:
-        # Use MySQL if credentials provided
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}'
-    else:
-        # Use SQLite (default, no setup needed)
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///menu_db.sqlite'
+# [VIVA MODE] Hardcoded PostgreSQL for guaranteed persistence on Render
+database_url = "postgresql://scan2order_usk9_user:AVp5b0Rg3RcfJPGwABuPmSsca7h8fgec@dpg-d7fp4om7r5hc739eruo0-a/scan2order_usk9"
 
-    # Forcing log flush to ensure messages show in Render
-    import sys
-    
-    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-    if 'postgresql' in db_uri:
-        print("\n[DB Check] ✅ Using PostgreSQL (Persistent) - Orders will be saved forever.", flush=True)
-        print("[DB Check] Connection URL found and configured successfully.", flush=True)
+# Fallback to local SQLite ONLY if not on Render (optional)
+if not os.getenv('RENDER'):
+    # Check if there's an override in environment
+    env_db = os.getenv('DATABASE_URL', '')
+    if env_db:
+        database_url = env_db.replace('postgres://', 'postgresql://', 1)
     else:
-        print("\n[DB Check] ⚠️ Using SQLite (Temporary) - Orders will be deleted on Render restart!", flush=True)
-        print("[DB Check] WARNING: DATABASE_URL environment variable might be missing or incorrect.", flush=True)
-    sys.stdout.flush()
+        # Use SQLite for local development if no DB_URL provided
+        if not database_url:
+            database_url = 'sqlite:///menu_db.sqlite'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
+# Forcing log flush to ensure messages show in Render
+import sys
+db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+if 'postgresql' in db_uri:
+    print("\n[DB Check] ✅ VIVA MODE: Hardcoded PostgreSQL Connected!", flush=True)
+    print("[DB Check] Orders will be saved permanently in the cloud.", flush=True)
+else:
+    print("\n[DB Check] ⚠️ Using SQLite (Temporary)", flush=True)
+sys.stdout.flush()
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')

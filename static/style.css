@@ -44,6 +44,8 @@ body {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    /* Added padding to prevent content overlap with fixed header */
+    padding-top: 80px;
 }
 
 /* Base Styles & Typography */
@@ -72,10 +74,12 @@ a {
 
 /* Header */
 header {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 100;
-    background: rgba(5, 5, 16, 0.8);
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Increased z-index to stay on top of everything */
+    background: rgba(5, 5, 16, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: var(--glass-border);

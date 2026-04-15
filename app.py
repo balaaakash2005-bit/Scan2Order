@@ -870,12 +870,15 @@ def generate_admin_summary_pdf(start_date, end_date, total_orders, total_income,
     header_style = ParagraphStyle('Header', parent=styles['Heading1'], fontSize=20, alignment=TA_CENTER, textColor=colors.HexColor('#2E86C1'))
     normal_style = styles['Normal']
 
-    elements.append(Paragraph('Daily Admin Summary', header_style))
+    elements.append(Paragraph('Sadakathullah Appa Canteen - Daily Summary', header_style))
     elements.append(Spacer(1, 0.2*inch))
+
+    # Calculate IST time (UTC + 5:30)
+    now_ist = datetime.now() + timedelta(hours=5, minutes=30)
 
     summary_data = [
         ['Period:', f"{start_date.strftime('%d-%m-%Y')}"],
-        ['Report Generated:', datetime.now().strftime('%d-%m-%Y %I:%M:%S %p')],
+        ['Report Generated:', now_ist.strftime('%d-%m-%Y %I:%M %p')],
         ['Total Orders:', str(total_orders)],
         ['Total Revenue:', f"Rs. {total_income:.2f}"],
         ['Total Items Sold:', str(total_items_sold)],
@@ -954,8 +957,9 @@ def generate_admin_summary_pdf(start_date, end_date, total_orders, total_income,
 @app.route('/admin/orders/summary-pdf')
 @login_required
 def download_admin_summary_pdf():
-    """Download today's summary report as PDF"""
-    today = datetime.now().date()
+    # Get today's date in IST
+    now_ist = datetime.now() + timedelta(hours=5, minutes=30)
+    today = now_ist.date()
     start_dt = datetime(today.year, today.month, today.day)
     end_dt = start_dt + timedelta(days=1)
 

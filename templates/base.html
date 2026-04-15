@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Digital menu accessible via QR code scan">
+    <title>{% block title %}Sadakathullahappa College Canteen{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>🎓 Sadakathullah Appa College Canteen</h1>
+                <p class="tagline">{% block tagline %}Delicious Meals for Students{% endblock %}</p>
+            </div>
+            <nav>
+                {% block nav %}
+                <a href="{{ url_for('menu') }}">Menu</a>
+                <a href="{{ url_for('admin') }}">Admin</a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+                {% endif %}
+                <a href="{{ url_for('qr_code') }}">QR Code</a>
+                {% endblock %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

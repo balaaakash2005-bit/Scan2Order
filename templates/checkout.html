@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - Sadakathullahappa College Canteen{% endblock %}
+{% block tagline %}Complete Your Order{% endblock %}
+
+{% block content %}
+<div class="container checkout-container">
+    <div class="checkout-grid">
+        <!-- Checkout Form -->
+        <div class="checkout-form-container glass-panel">
+            <h2>Payment Details</h2>
+
+            <form id="checkout-form" action="{{ url_for('confirm_order') }}" method="POST" class="checkout-form">
+                <div class="form-group">
+                    <label for="customer_name">Full Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="customer_name" name="customer_name" required
+                        placeholder="Enter your full name" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Phone Number <span style="color: var(--danger);">*</span></label>
+                    <input type="tel" id="phone_number" name="phone_number" required
+                        placeholder="Enter your phone number" class="form-input" pattern="[0-9]{10}" maxlength="10">
+                    <p class="form-help">We'll use this to track your order</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="payment-method-label">Payment Method <span
+                            style="color: var(--danger);">*</span></label>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="Cash" checked
+                                onchange="togglePaymentFields()">
+                            <div class="payment-card">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                                <span>Cash</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="UPI_Mock" onchange="togglePaymentFields()">
+                            <div class="payment-card">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                                <span>UPI</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- UPI Fields (Hidden by default) -->
+                <div id="upi-fields" class="form-group mock-upi-panel" style="display: none;">
+                    <div class="form-group">
+                        <label for="upi_id">UPI ID *</label>
+                        <input type="text" id="upi_id" name="upi_id" placeholder="example@upi" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="upi_pin">UPI PIN *</label>
+                        <input type="password" id="upi_pin" name="upi_pin" placeholder="Enter PIN (Mock: 1234)"
+                            class="form-input" maxlength="6">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('view_cart') }}" class="back-btn">
+                        Back to Cart
+                    </a>
+                    <button type="submit" id="confirm-order-btn" class="confirm-order-btn">
+                        Confirm Order
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary glass-panel">
+            <h2 class="summary-title">Order Summary</h2>
+
+            <div class="summary-items">
+                {% for item_id, item in cart.items() %}
+                <div class="summary-item">
+                    <span class="item-name">{{ item.name }} <small>x{{ item.quantity }}</small></span>
+                    <span class="item-price">₹{{ "%.2f"|format(item.price * item.quantity) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="summary-totals">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (5%)</span>
+                    <span>₹{{ "%.2f"|format(tax) }}</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>Total</span>
+                    <span id="total-amount">₹{{ "%.2f"|format(total) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay SDK Removed -->
+
+<script>
+    const checkoutForm = document.getElementById('checkout-form');
+    const confirmBtn = document.getElementById('confirm-order-btn');
+    const totalAmount = {{ total }};
+
+    function togglePaymentFields() {
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+        const upiFields = document.getElementById('upi-fields');
+        const upiId = document.getElementById('upi_id');
+        const upiPin = document.getElementById('upi_pin');
+
+        if (paymentMethod === 'UPI_Mock') {
+            upiFields.style.display = 'block';
+            upiId.required = true;
+            upiPin.required = true;
+        } else {
+            upiFields.style.display = 'none';
+            upiId.required = false;
+            upiPin.required = false;
+        }
+    }
+
+    // Helper to verify payment
+    async function verifyPayment(response) {
+        try {
+            const verifyResponse = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                })
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.success) {
+                window.location.href = verifyData.redirect_url;
+            } else {
+                throw new Error(verifyData.error || 'Payment verification failed');
+            }
+        } catch (error) {
+            console.error('Verification error:', error);
+            alert('Verification Failed: ' + error.message);
+            window.location.href = '/payment/failed';
+        }
+    }
+
+    checkoutForm.addEventListener('submit', async function (e) {
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+        // For CASH: let the form submit normally (no preventDefault)
+        if (paymentMethod === 'Cash') {
+            // Direct form POST — works on all devices including mobile
+            console.log('[CHECKOUT] Cash payment — submitting form directly');
+            return true;
+        }
+
+        // For UPI_Mock: use AJAX
+        e.preventDefault();
+        console.log('[CHECKOUT] UPI_Mock payment — using AJAX');
+
+        const customerName = document.getElementById('customer_name').value;
+        const phoneNumber = document.getElementById('phone_number').value;
+        const upiId = document.getElementById('upi_id').value;
+        const upiPin = document.getElementById('upi_pin').value;
+
+        if (!customerName || !phoneNumber || !upiId || !upiPin) {
+            alert('Please fill all fields');
+            return false;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span>Processing...</span>';
+
+        try {
+            const response = await fetch('/api/payment/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_name: customerName,
+                    phone_number: phoneNumber,
+                    payment_method: paymentMethod,
+                    upi_id: upiId,
+                    upi_pin: upiPin
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create payment order');
+            }
+
+            // AUTO-SUCCESS FOR MOCK UPI
+            console.log("Mock UPI Mode — Bypassing Gateway");
+            await verifyPayment({
+                razorpay_payment_id: 'pay_upi_mock_' + Date.now(),
+                razorpay_order_id: data.order_id,
+                razorpay_signature: 'mock_signature'
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Payment failed: ' + error.message);
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Confirm Order';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}QR Code - Sadakathullahappa College Canteen{% endblock %}
+{% block tagline %}Scan to View Our Menu{% endblock %}
+
+{% block content %}
+<div class="qr-container" style="max-width: 600px; margin: 0 auto; text-align: center;">
+    <h2 style="margin-bottom: 2rem;">📱 Digital Menu Access</h2>
+    
+    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+        Scan this QR code with any mobile device to view our <strong>Canteen Menu</strong> and place an order.
+    </p>
+
+    <!-- Specific title for QR code -->
+    <h1 style="font-size: 2.5rem; font-weight: bold; color: #3b82f6; margin-bottom: 1.5rem;">Scan 2 Order</h1>
+    <!-- Single Unified QR Code Image -->
+    <div class="qr-code-image" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+        <img src="{{ url_for('generate_qr', custom_url=custom_url) if custom_url else url_for('generate_qr') }}"
+             alt="Access Portal QR Code" id="qr-image" style="max-width: 100%; border-radius: 8px;">
+    </div>
+
+    <!-- Network / URL Info -->
+    <div class="qr-info" style="margin-bottom: 1.5rem;">
+        <p><strong>🌐 Access URL:</strong></p>
+        <p class="qr-url" style="color: #3b82f6; font-weight: 600; word-break: break-all;">
+            {{ target_url }}
+        </p>
+    </div>
+
+    <!-- Instructions Block -->
+    <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); text-align: left; margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: #3b82f6;">📖 How to Scan:</h3>
+        <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 1.5rem; margin: 0; font-size: 0.95rem;">
+            <li>Open the Camera app on your mobile device.</li>
+            <li>Point the camera at the QR code above.</li>
+            <li>Tap the notification to open the Canteen Menu and order!</li>
+        </ul>
+    </div>
+
+    <!-- Download / Print Options -->
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <button onclick="downloadQR()" class="btn btn-primary" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold;">
+            📥 Download QR Code
+        </button>
+        <button onclick="window.print()" class="btn btn-secondary" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold;">
+            🖨️ Print QR Code
+        </button>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function downloadQR() {
+        const link = document.createElement('a');
+        const customUrl = "{{ custom_url }}";
+        
+        if (customUrl) {
+            link.href = "{{ url_for('generate_qr') }}?custom_url=" + encodeURIComponent(customUrl);
+        } else {
+            link.href = "{{ url_for('generate_qr') }}";
+        }
+        
+        link.download = 'canteen-portal-qr.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+
+</script>
+
+<style>
+    @media print {
+        header,
+        nav,
+        .btn,
+        .qr-info,
+        div[style*="margin-top"] {
+            display: none !important;
+        }
+
+        .qr-container {
+            margin: 0;
+            padding: 2rem;
+            background: white;
+            box-shadow: none !important;
+        }
+
+        .qr-code-image {
+            box-shadow: none !important;
+        }
+
+        body {
+            background: white;
+        }
+    }
+</style>
+{% endblock %}

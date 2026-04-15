@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - Admin Panel{% endblock %}
+{% block tagline %}Manage Customer Orders{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass-panel"
+        style="margin-bottom: 2rem; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0;">Customer Orders</h2>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <a href="{{ url_for('admin') }}" class="btn"
+                style="background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 8px; color: white; display: flex; gap: 0.5rem; align-items: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Menu
+            </a>
+            <a href="{{ url_for('download_admin_summary_pdf') }}" class="btn"
+                style="background: rgba(46, 204, 113, 0.3); padding: 0.5rem 1rem; border-radius: 8px; color: white; display: flex; gap: 0.5rem; align-items: center;">
+                📄 Download Today Summary
+            </a>
+        </div>
+    </div>
+
+    {% if low_stock_items or out_of_stock_items %}
+    <div class="glass-panel" style="margin-bottom: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.08); border-left: 4px solid #f59e0b;">
+        <strong style="color: #fde047;">Stock Alerts:</strong>
+        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: white; list-style: disc;">
+            {% for item in low_stock_items %}
+                <li>{{ item.name }} ({{ item.available_count }} left) - <strong style="color: #ffe082;">Limited Stock</strong></li>
+            {% endfor %}
+            {% for item in out_of_stock_items %}
+                <li>{{ item.name }} - <strong style="color: #ffcccb;">out of stock</strong></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if orders %}
+    <div class="glass-panel" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="glass-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer Name</th>
+                        <th>Customer Phone</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td style="font-family: monospace; font-size: 1.1rem; color: var(--primary);">#{{ order.id }}
+                        </td>
+                        <td>{{ order.customer.name if order.customer else 'Guest' }}</td>
+                        <td>{{ order.customer.phone_number if order.customer else 'N/A' }}</td>
+                        <td>
+                            <details style="cursor: pointer;">
+                                <summary style="color: var(--accent); outline: none;">{{ order.items|length }} items
+                                </summary>
+                                <ul class="order-items-list"
+                                    style="margin-top: 0.5rem; padding-left: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                    {% for item in order.items %}
+                                    <li>{{ item.menu_item.name }} x{{ item.quantity }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </details>
+                        </td>
+                        <td style="font-weight: bold;">Rs.{{ "%.2f"|format(order.total_amount) }}</td>
+                        <td>{{ order.payment_method }}</td>
+                        <td><span class="status-badge status-{{ order.status }}">{{ order.status.title() }}</span></td>
+                        <td style="color: var(--text-secondary); font-size: 0.9rem;">{{ order.timestamp.strftime('%I:%M
+                            %p') }}</td>
+                        <td>
+                            <a href="{{ url_for('download_order_pdf', order_id=order.id) }}" class="btn"
+                                style="background: rgba(52, 152, 219, 0.3); color: #3498db; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                PDF
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-panel" style="text-align: center; padding: 4rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" style="color: var(--text-secondary); margin-bottom: 1rem;">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        <h2 style="margin-bottom: 0.5rem;">No orders yet</h2>
+        <p style="color: var(--text-secondary);">Orders will appear here once customers start placing them.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

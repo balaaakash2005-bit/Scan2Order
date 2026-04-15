@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - Sadakathullahappa College Canteen{% endblock %}
+{% block tagline %}Browse Our Canteen Menu{% endblock %}
+
+{% block content %}
+<!-- Floating Cart Icon -->
+<a href="{{ url_for('view_cart') }}" class="cart-float" id="cart-float">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+    </svg>
+    <span class="cart-count" id="cart-count">{{ session.get('cart', {})|length }}</span>
+</a>
+
+<div class="category-filter">
+    <button class="category-btn active" onclick="filterCategory(this, 'all')">All Items</button>
+    {% for category in categories %}
+    <button class="category-btn" onclick="filterCategory(this, '{{ category }}')">{{ category }}</button>
+    {% endfor %}
+</div>
+
+<div class="menu-grid">
+    {% for item in items %}
+    <div class="menu-item" data-category="{{ item.category }}">
+        {% if item.image_url %}
+        <div class="item-image-container">
+            <img src="{{ url_for('static', filename=item.image_url) }}" alt="{{ item.name }}" loading="lazy">
+        </div>
+        {% else %}
+        <!-- Fallback gradient if no image -->
+        <div class="item-image-container"
+            style="background: linear-gradient(135deg, #1f1f2e, #2d2d3f); display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 3rem; opacity: 0.3;">🍽️</span>
+        </div>
+        {% endif %}
+
+        <div class="menu-item-content">
+            <div class="item-category">{{ item.category }}</div>
+            <div class="item-header">
+                <h3 class="item-name">{{ item.name }}</h3>
+                <div class="item-price">₹{{ "%.0f"|format(item.price) }}</div>
+            </div>
+            
+            <div class="stock-status {% if item.available_count <= 5 %}low-stock{% endif %}">
+                {% if item.available_count > 0 %}
+                    <span class="stock-label">Available:</span> 
+                    <span class="stock-value">{{ item.available_count }}</span>
+                {% else %}
+                    <span class="out-of-stock">Sold Out</span>
+                {% endif %}
+            </div>
+
+            <p class="item-description">{{ item.description }}</p>
+
+            <!-- Add to Cart Form -->
+            <form action="{{ url_for('add_to_cart', id=item.id) }}" method="POST" class="add-to-cart-form">
+                <div class="quantity-selector">
+                    <button type="button" class="qty-btn" onclick="decrementQty(this)" {% if item.available_count <= 0 %}disabled{% endif %}>−</button>
+                    <input type="number" name="quantity" value="{% if item.available_count > 0 %}1{% else %}0{% endif %}" min="{% if item.available_count > 0 %}1{% else %}0{% endif %}" max="{{ item.available_count }}" class="qty-input" readonly>
+                    <button type="button" class="qty-btn" onclick="incrementQty(this, {{ item.available_count }})" {% if item.available_count <= 0 %}disabled{% endif %}>+</button>
+                </div>
+                <button type="submit" class="add-to-cart-btn" {% if item.available_count <= 0 %}disabled{% endif %}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    {% if item.available_count > 0 %}Add{% else %}Sold Out{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not items %}
+<div class="empty-state">
+    <h2>No menu items available</h2>
+    <p>Please check back later or contact the restaurant.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+<style>
+    .stock-status {
+        font-size: 0.85rem;
+        margin: 0.5rem 0;
+        color: #888;
+    }
+    .stock-value {
+        font-weight: 600;
+        color: #4CAF50;
+    }
+    .low-stock .stock-value {
+        color: #ff9800;
+    }
+    .out-of-stock {
+        color: #f44336;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+    .add-to-cart-btn:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+        border-color: #444;
+    }
+    .qty-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+{% block scripts %}
+<script>
+    function filterCategory(btn, category) {
+        const items = document.querySelectorAll('.menu-item');
+        const buttons = document.querySelectorAll('.category-btn');
+
+        // Update active button
+        buttons.forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        // Filter items
+        items.forEach(item => {
+            const itemCategory = item.dataset.category ? item.dataset.category.trim() : '';
+            if (category === 'all' || itemCategory === category) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    function incrementQty(btn, maxStock) {
+        const input = btn.previousElementSibling;
+        const currentValue = parseInt(input.value);
+        if (currentValue < maxStock) {
+            input.value = currentValue + 1;
+        }
+    }
+
+    function decrementQty(btn) {
+        const input = btn.nextElementSibling;
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    }
+</script>
+{% endblock %}

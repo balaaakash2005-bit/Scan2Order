@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Menu Item - Sadakathullahappa College Canteen{% endblock %}
+{% block tagline %}Update Canteen Item Details{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px;">
+    <div class="glass-panel" style="padding: 2.5rem;">
+        <h2 style="margin-bottom: 2rem; text-align: center; color: var(--primary);">Edit Menu Item</h2>
+
+        <form method="POST" action="{{ url_for('edit_item', id=item.id) }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Item Name *</label>
+                <input type="text" id="name" name="name" value="{{ item.name }}" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category *</label>
+                <select id="category" name="category" class="form-input" required>
+                    <option value="Breakfast" {% if item.category=='Breakfast' %}selected{% endif %}>Breakfast</option>
+                    <option value="Lunch" {% if item.category=='Lunch' %}selected{% endif %}>Lunch</option>
+                    <option value="Tea" {% if item.category=='Tea' %}selected{% endif %}>Tea</option>
+                    <option value="Drinks" {% if item.category=='Drinks' %}selected{% endif %}>Drinks</option>
+                    <option value="Juice" {% if item.category=='Juice' %}selected{% endif %}>Juice</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-input">{{ item.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price (₹) *</label>
+                <input type="number" id="price" name="price" step="0.01" min="0" value="{{ item.price }}"
+                    class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label for="daily_stock">Daily Stock Limit *</label>
+                <input type="number" id="daily_stock" name="daily_stock" value="{{ item.daily_stock }}" min="1" class="form-input" required>
+                <small style="color: var(--text-secondary);">The limit that resets every morning.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="available_count">Available Stock Now</label>
+                <input type="number" id="available_count" name="available_count" value="{{ item.available_count }}" min="0" class="form-input">
+                <small style="color: var(--text-secondary);">Current count left for today.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Item Image</label>
+                <div
+                    style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.2); text-align: center;">
+                    {% if item.image_url %}
+                    <div style="margin-bottom: 1rem;">
+                        <img src="{{ url_for('static', filename=item.image_url) }}" alt="Current Image"
+                            style="max-height: 120px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    </div>
+                    {% endif %}
+                    <input type="file" id="image" name="image" accept="image/*" class="form-input"
+                        style="border: none; background: transparent;">
+                    <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Leave empty to keep
+                        current image</small>
+                </div>
+            </div>
+
+            <div class="form-group checkbox-group"
+                style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
+                <input type="checkbox" id="available" name="available" {% if item.available %}checked{% endif %}
+                    style="width: 20px; height: 20px; accent-color: var(--primary);">
+                <label for="available" style="margin: 0; cursor: pointer;">Available for customers</label>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="confirm-order-btn" style="flex: 1;">Save Changes</button>
+                <a href="{{ url_for('admin') }}" class="btn"
+                    style="flex: 1; text-align: center; background: rgba(0,0,0,0.05); color: var(--text-secondary);">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
